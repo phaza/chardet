@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 ######################## BEGIN LICENSE BLOCK ########################
 # The Original Code is mozilla.org code.
 #
@@ -14,12 +16,12 @@
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
@@ -67,14 +69,14 @@ module  UniversalDetector
                 unless st then next end
                 if st == :FoundIt
                     @_mBestGuessProber = prober
-                    return get_state()                
+                    return get_state()
                 elsif st == :NotMe
                     prober.active = false
                     @_mActiveNum -= 1
                     if @_mActiveNum <= 0
                         @_mState = :NotMe
                         return get_state()
-                    end                            
+                    end
                 end
             end
             return get_state()
@@ -87,7 +89,7 @@ module  UniversalDetector
             elsif st == :NotMe
                 return 0.01
             end
-            
+
             bestConf = 0.0
             @_mBestGuessProber = nil
             for prober in @_mProbers

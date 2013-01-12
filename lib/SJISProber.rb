@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 ######################## BEGIN LICENSE BLOCK ########################
 # The Original Code is mozilla.org code.
 #
@@ -14,12 +16,12 @@
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
@@ -60,8 +62,8 @@ module UniversalDetector
                     if DEBUG
                         p(get_charset_name() + ' prober hit error at byte ' + i.to_s + '\n')
                     end
-                    @_mState = :NotMe                    
-                    break                    
+                    @_mState = :NotMe
+                    break
                 elsif codingState == :ItsMe
                     @_mState = :FoundIt
                     break
@@ -70,7 +72,7 @@ module UniversalDetector
                     if i == 0
                         @_mLastChar[1] = aBuf[0]
                         @_mContextAnalyzer.feed(@_mLastChar[2 - charLen..@_mLastChar.length], charLen)
-                        @_mDistributionAnalyzer.feed(@_mLastChar, charLen)                        
+                        @_mDistributionAnalyzer.feed(@_mLastChar, charLen)
                     else
                         @_mContextAnalyzer.feed(aBuf[i + 1 - charLen .. i + 3 - charLen], charLen)
                         @_mDistributionAnalyzer.feed(aBuf[i - 1 .. i + 1], charLen)

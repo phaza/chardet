@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 ######################## BEGIN LICENSE BLOCK ########################
 # The Original Code is mozilla.org code.
 #
@@ -14,12 +16,12 @@
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
@@ -53,7 +55,7 @@ module  UniversalDetector
         def get_charset_name
         end
 
-        def feed(aBuf)            
+        def feed(aBuf)
             aLen = aBuf.length
             for i in 0...aLen
                 codingState = @_mCodingSM.next_state(aBuf[i])
@@ -62,7 +64,7 @@ module  UniversalDetector
                         p(get_charset_name() + ' prober hit error at byte ' + i.to_s + '\n')
                     end
                     @_mState = :NotMe
-                    break                
+                    break
                 elsif codingState == :ItsMe
                     @_mState = :FoundIt
                     break

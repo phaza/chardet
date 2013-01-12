@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 ######################## BEGIN LICENSE BLOCK ########################
 # The Original Code is mozilla.org code.
 #
@@ -14,12 +16,12 @@
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
@@ -35,11 +37,11 @@ require "JISFreq"
 
 module  UniversalDetector
     class CharDistributionAnalysis
-        
+
         ENOUGH_DATA_THRESHOLD = 1024
         SURE_YES = 0.99
         SURE_NO = 0.01
-        
+
         def initialize
             @_mCharToFreqOrder = nil # Mapping table to get frequency order from char order (get from GetOrder())
             @_mTableSize = nil # Size of above table
@@ -98,13 +100,13 @@ module  UniversalDetector
         end
 
         def get_order(aStr)
-            # We do not handle characters based on the original encoding string, but 
+            # We do not handle characters based on the original encoding string, but
             # convert this encoding string to a number, here called order.
             # This allows multiple encodings of a language to share one frequency table.
             return -1
         end
     end
-    
+
     class EUCTWDistributionAnalysis < CharDistributionAnalysis
         def initialize
             super
@@ -114,7 +116,7 @@ module  UniversalDetector
         end
 
         def get_order(aStr)
-            # for euc-TW encoding, we are interested 
+            # for euc-TW encoding, we are interested
             #   first  byte range: 0xc4 -- 0xfe
             #   second byte range: 0xa1 -- 0xfe
             # no validation needed here. State machine has done that
@@ -135,7 +137,7 @@ module  UniversalDetector
         end
 
         def get_order(aStr)
-            # for euc-KR encoding, we are interested 
+            # for euc-KR encoding, we are interested
             #   first  byte range: 0xb0 -- 0xfe
             #   second byte range: 0xa1 -- 0xfe
             # no validation needed here. State machine has done that
@@ -156,7 +158,7 @@ module  UniversalDetector
         end
 
         def get_order(aStr)
-            # for GB2312 encoding, we are interested 
+            # for GB2312 encoding, we are interested
             #  first  byte range: 0xb0 -- 0xfe
             #  second byte range: 0xa1 -- 0xfe
             # no validation needed here. State machine has done that
@@ -177,7 +179,7 @@ module  UniversalDetector
         end
 
         def get_order(aStr)
-            # for big5 encoding, we are interested 
+            # for big5 encoding, we are interested
             #   first  byte range: 0xa4 -- 0xfe
             #   second byte range: 0x40 -- 0x7e , 0xa1 -- 0xfe
             # no validation needed here. State machine has done that
@@ -202,7 +204,7 @@ module  UniversalDetector
         end
 
         def get_order(aStr)
-            # for sjis encoding, we are interested 
+            # for sjis encoding, we are interested
             #   first  byte range: 0x81 -- 0x9f , 0xe0 -- 0xfe
             #   second byte range: 0x40 -- 0x7e,  0x81 -- oxfe
             # no validation needed here. State machine has done that
@@ -230,7 +232,7 @@ module  UniversalDetector
         end
 
         def get_order(aStr)
-            # for euc-JP encoding, we are interested 
+            # for euc-JP encoding, we are interested
             #   first  byte range: 0xa0 -- 0xfe
             #   second byte range: 0xa1 -- 0xfe
             # no validation needed here. State machine has done that
@@ -241,5 +243,5 @@ module  UniversalDetector
             end
         end
     end
-    
+
 end

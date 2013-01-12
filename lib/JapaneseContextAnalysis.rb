@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 ######################## BEGIN LICENSE BLOCK ########################
 # The Original Code is mozilla.org code.
 #
@@ -14,12 +16,12 @@
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
@@ -138,9 +140,9 @@ module UniversalDetector
             if @_mDone then return end
 
             # The buffer we got is byte oriented, and a character may span in more than one
-            # buffers. In case the last one or two byte in last buffer is not complete, we 
+            # buffers. In case the last one or two byte in last buffer is not complete, we
             # record how many byte needed to complete that character and skip these bytes here.
-            # We can choose to record those bytes as well and analyse the character once it 
+            # We can choose to record those bytes as well and analyse the character once it
             # is complete, but since a character will not make much difference, by simply skipping
             # this character will simply our logic and improve performance.
             i = @_mNeedToSkipCharNum
@@ -171,7 +173,7 @@ module UniversalDetector
         def get_confidence
             # This is just one way to calculate confidence. It works well for me.
             if @_mTotalRel > MINIMUM_DATA_THRESHOLD
-                return (@_mTotalRel - @_mRelSample[0]) / @_mTotalRel                
+                return (@_mTotalRel - @_mRelSample[0]) / @_mTotalRel
             else
                 return DONT_KNOW
             end

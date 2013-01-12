@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 ######################## BEGIN LICENSE BLOCK ########################
 # The Original Code is mozilla.org code.
 #
@@ -14,31 +16,31 @@
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-require "EscCharSetProber"
-require "MBCSGroupProber"
-require "SBCSGroupProber"
-require "Latin1Prober"
+# require "EscCharSetProber"
+# require "MBCSGroupProber"
+# require "SBCSGroupProber"
+# require "Latin1Prober"
 require "singleton"
 
-module UniversalDetector    
-  
+module UniversalDetector
+
     class << self
         def encoding(data)
             chardet(data)['encoding']
         end
-        
+
         def chardet(data)
             u = UniversalDetector::Detector.instance
             u.reset()
@@ -47,9 +49,9 @@ module UniversalDetector
             u.result
         end
     end
-    
+
     DEBUG = nil
-  
+
     Detectiong = 0
     FoundIt = 1
     NotMe = 2
@@ -57,28 +59,28 @@ module UniversalDetector
     Start = 0
     Error = 1
     ItsMe = 2
-  
+
     MINIMUM_THRESHOLD = 0.20
     PureAscii = 0
     EscAscii = 1
     Highbyte = 2
 
     SHORTCUT_THRESHOLD = 0.95
-  
+
     class Detector
-        
+
         include Singleton
-        
+
         attr_reader :result
-    
+
         def initialize
-            @_highBitDetector = /[\x80-\xFF]/
+            @_highBitDetector = Regexp.new('[\x80-\xFF]', nil, 'n')
             @_escDetector = /\033|~\{/
             @_mEscCharSetProber = nil
             @_mCharSetProbers = []
             reset
         end
-    
+
         def reset
             @result = {"encoding"=> nil, "confidence"=> 0.0}
             @done = false
@@ -92,11 +94,11 @@ module UniversalDetector
             for prober in @_mCharSetProbers
                 prober.reset
             end
-        end    
-    
+        end
+
         def feed(data)
             if @done || data.empty?
-                return 
+                return
             end
             unless  @_mGotData
                 # If the data starts with BOM, we know it is UTF
@@ -106,7 +108,7 @@ module UniversalDetector
                 elsif data[0,4] == "\xFF\xFE\x00\x00"
                     # FF FE 00 00  UTF-32, little-endian BOM
                     @result = {"encoding"=> "UTF-32LE", "confidence"=> 1.0}
-                elsif data[0,4] == "\x00\x00\xFE\xFF" 
+                elsif data[0,4] == "\x00\x00\xFE\xFF"
                     # 00 00 FE FF  UTF-32, big-endian BOM
                     @result = {"encoding"=> "UTF-32BE", "confidence"=> 1.0}
                 elsif data[0,4] == "\xFE\xFF\x00\x00"
@@ -120,23 +122,23 @@ module UniversalDetector
                     @result = {"encoding"=> "UTF-16LE", "confidence"=> 1.0}
                 elsif data[0,2] == "\xFE\xFF"
                     # FE FF  UTF-16, big endian BOM
-                    @result = {"encoding"=> "UTF-16BE", "confidence"=> 1.0}          
+                    @result = {"encoding"=> "UTF-16BE", "confidence"=> 1.0}
                 end
             end
             @_mGotData = true
             if @result["encoding"] && @result["confidence"] > 0.0
                 @done = true
                 return
-            end            
-            
+            end
+
             if @_mInputState == :PureAscii
                 if data =~ @_highBitDetector
                     @_mInputState = :Highbyte
                 elsif (@_mLastChar + data) =~ @_escDetector
                     @_mInputState = :EscAscii
                 end
-            end                        
-            
+            end
+
             @_mLastChar = data[-1]
             if @_mInputState == :EscAscii
                 unless @_mEscCharSetProber
@@ -144,13 +146,13 @@ module UniversalDetector
                 end
                 if @_mEscCharSetProber.feed(data) == constants.eFoundIt
                     @result = {"encoding"=> @_mEscCharSetProber.get_charset_name() ,"confidence"=> @_mEscCharSetProber.get_confidence()}
-                    @done = true          
-                end  
+                    @done = true
+                end
             elsif @_mInputState == :Highbyte
                 if @_mCharSetProbers.empty?
                     @_mCharSetProbers = MBCSGroupProber.new.mProbers + SBCSGroupProber.new.mProbers + [Latin1Prober.new]
-                end                                
-                @_mCharSetProbers.each do |prober|                    
+                end
+                @_mCharSetProbers.each do |prober|
                     if prober.feed(data) == :FoundIt
                         @result = {"encoding"=> prober.get_charset_name(), "confidence"=> prober.get_confidence()}
                         @done = true
@@ -159,7 +161,7 @@ module UniversalDetector
                 end #for
             end
         end #feed
-  
+
         def close
             if @done then return end
             unless @_mGotData
@@ -169,7 +171,7 @@ module UniversalDetector
                 return
             end
             @done = true
-            
+
             if @_mInputState == :PureAscii
                 @result = {"encoding" =>  "ascii", "confidence" => 1.0}
                 return @result
@@ -193,7 +195,7 @@ module UniversalDetector
                     return @result
                 end
             end #if
-            
+
             if DEBUG
                 p("no probers hit minimum threshhold\n")
                 for prober in @_mCharSetProbers
@@ -202,8 +204,8 @@ module UniversalDetector
                                      [prober.get_charset_name(), \
                                       prober.get_confidence()])
                 end
-            end            
+            end
         end #close
     end #class
-                       
+
 end #module

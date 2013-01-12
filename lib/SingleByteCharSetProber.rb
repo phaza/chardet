@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+
 ######################## BEGIN LICENSE BLOCK ########################
 # The Original Code is mozilla.org code.
 #
@@ -14,12 +16,12 @@
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2.1 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
@@ -30,7 +32,7 @@ require 'UniversalDetector'
 require 'CharSetProber'
 
 module UniversalDetector
-    
+
     SAMPLE_SIZE = 64
     SB_ENOUGH_REL_THRESHOLD = 1024
     POSITIVE_SHORTCUT_THRESHOLD = 0.95
@@ -38,7 +40,7 @@ module UniversalDetector
     SYMBOL_CAT_ORDER = 250
     NUMBER_OF_SEQ_CAT = 4
     POSITIVE_CAT = NUMBER_OF_SEQ_CAT - 1
-    
+
     class SingleByteCharSetProber < CharSetProber
         def initialize(model, reversed=false, nameProber=nil)
             super()
@@ -72,20 +74,20 @@ module UniversalDetector
             aLen = aBuf.length
             unless aLen
                 return get_state()
-            end                        
-            
+            end
+
             for i in 0...aLen
                 c = aBuf[i]
                 order = @_mModel['charToOrderMap'][c]
                 if order < SYMBOL_CAT_ORDER
                     @_mTotalChar += 1
                 end
-                if order < SAMPLE_SIZE                    
+                if order < SAMPLE_SIZE
                     @_mFreqChar += 1
                     if @_mLastOrder < SAMPLE_SIZE
                         @_mTotalSeqs += 1
                         unless @_mReversed
-                            @_mSeqCounters[@_mModel['precedenceMatrix'][(@_mLastOrder * SAMPLE_SIZE) + order]] += 1                        
+                            @_mSeqCounters[@_mModel['precedenceMatrix'][(@_mLastOrder * SAMPLE_SIZE) + order]] += 1
                         else # reverse the order of the letters in the lookup
                             @_mSeqCounters[@_mModel['precedenceMatrix'][(order * SAMPLE_SIZE) + @_mLastOrder]] += 1
                         end
