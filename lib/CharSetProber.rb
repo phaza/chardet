@@ -53,18 +53,18 @@ module  UniversalDetector
         end
 
         def filter_high_bit_only(aBuf)
-            aBuf = aBuf.gsub(/([\x00-\x7F])+/, '')
-            return aBuf
+            # aBuf.gsub(/([\x00-\x7F])+/, '')
+            aBuf.select { | b | (b & 0x80) != 0 }
         end
 
         def filter_without_english_letters(aBuf)
-            aBuf = aBuf.gsub(/([A-Za-z])+/, '')
-            return aBuf
+            # aBuf.gsub(/([A-Za-z])+/, '')
+            aBuf.reject { | b | ((b >= 0x41) && (b <= 0x5A)) || ((b >= 0x61) && (b <= 0x7A)) }
         end
 
         def filter_with_english_letters(aBuf)
-            # TODO
-            return aBuf
+            # aBuf.gsub(/([^A-Za-z])+/, '')
+            aBuf.select { | b | ((b >= 0x41) && (b <= 0x5A)) || ((b >= 0x61) && (b <= 0x7A)) }
         end
 
     end #class

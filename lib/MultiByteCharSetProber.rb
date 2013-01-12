@@ -38,7 +38,7 @@ module  UniversalDetector
             super
             @_mDistributionAnalyzer = nil
             @_mCodingSM = nil
-            @_mLastChar = ['\x00', '\x00']
+            @_mLastChar = [ 0x00, 0x00 ]
         end
 
         def reset
@@ -49,7 +49,7 @@ module  UniversalDetector
             if @_mDistributionAnalyzer
                 @_mDistributionAnalyzer.reset()
             end
-            @_mLastChar = ['\x00', '\x00']
+            @_mLastChar = [ 0x00, 0x00 ]
         end
 
         def get_charset_name

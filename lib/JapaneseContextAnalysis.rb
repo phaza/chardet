@@ -188,8 +188,7 @@ module UniversalDetector
         def get_order(aStr)
             unless aStr then return -1, 1 end
             # find out current char's byte length
-            if ((aStr[0] >= 0x81) and (aStr[0] <= 0x9F)) or \
-               ((aStr[0] >= 0xE0) and (aStr[0] <= 0xFC))
+            if ((aStr[0] >= 0x81) and (aStr[0] <= 0x9F)) or ((aStr[0] >= 0xE0) and (aStr[0] <= 0xFC))
                 charLen = 2
             else
                 charLen = 1
@@ -197,9 +196,7 @@ module UniversalDetector
 
             # return its order if it is hiragana
             if aStr.length > 1
-                if (aStr[0] == '\202') and \
-                   (aStr[1] >= 0x9F) and \
-                   (aStr[1] <= 0xF1)
+                if (aStr[0] == '\202') and (aStr[1] >= 0x9F) and (aStr[1] <= 0xF1)
                     return ord(aStr[1]) - 0x9F, charLen
                 end
             end
@@ -212,7 +209,7 @@ module UniversalDetector
         def get_order(aStr)
             unless aStr then return -1, 1 end
             # find out current char's byte length
-            aStr = aStr.to_s
+            # aStr = aStr.to_s
             if (aStr[0] == 0x8E) or ((aStr[0] >= 0xA1) and (aStr[0] <= 0xFE))
                 charLen = 2
             elsif aStr[0] == 0x8F
@@ -223,9 +220,7 @@ module UniversalDetector
 
             # return its order if it is hiragana
             if aStr.length > 1
-                if (aStr[0] == 0xA4) and \
-                   (aStr[1] >= 0xA1) and \
-                   (aStr[1] <= 0xF3)
+                if (aStr[0] == 0xA4) and (aStr[1] >= 0xA1) and (aStr[1] <= 0xF3)
                     return aStr[1][0] - 0xA1, charLen
                 end
             end
