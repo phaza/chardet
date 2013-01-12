@@ -28,7 +28,7 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-require 'UniversalDetector'
+# require 'UniversalDetector'
 
 module UniversalDetector
     BIG5_TYPICAL_DISTRIBUTION_RATIO = 0.75

@@ -28,7 +28,7 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-require 'UniversalDetector'
+# require 'UniversalDetector'
 
 module UniversalDetector
     # Sampling from about 20M text materials include literature and computer technology

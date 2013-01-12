@@ -28,7 +28,7 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-require 'UniversalDetector'
+# require 'UniversalDetector'
 
 module UniversalDetector
     # GB2312 most frequently used character table

@@ -28,7 +28,7 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-require 'UniversalDetector'
+# require 'UniversalDetector'
 require 'CharSetGroupProber'
 require 'SingleByteCharSetProber'
 require 'LangCyrillicModel'

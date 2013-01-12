@@ -28,7 +28,7 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-require 'UniversalDetector'
+# require 'UniversalDetector'
 
 module UniversalDetector
     # 255 => Control characters that usually does not exist in any text
