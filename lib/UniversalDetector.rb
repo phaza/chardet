@@ -28,10 +28,10 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-# require "EscCharSetProber"
-# require "MBCSGroupProber"
-# require "SBCSGroupProber"
-# require "Latin1Prober"
+require "EscCharSetProber"
+require "MBCSGroupProber"
+require "SBCSGroupProber"
+require "Latin1Prober"
 require "singleton"
 
 module UniversalDetector
