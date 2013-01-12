@@ -74,7 +74,7 @@ module UniversalDetector
         attr_reader :result
 
         def initialize
-            @_highBitDetector = Regexp.new('[\x80-\xFF]', nil, 'n')
+            # @_highBitDetector = Regexp.new('[\x80-\xFF]', nil, 'n')
             @_escDetector = /\033|~\{/
             @_mEscCharSetProber = nil
             @_mCharSetProbers = []
@@ -87,13 +87,17 @@ module UniversalDetector
             @_mStart = true
             @_mGotData = false
             @_mInputState = :PureAscii
-            @_mLastChar = ""
+            @_mLastChar = []
             if @_mEscCharSetProber
                 @_mEscCharSetProber.reset
             end
             for prober in @_mCharSetProbers
                 prober.reset
             end
+        end
+
+        def contains_high_bit?(data)
+          data.any? { | b | (b & 0x80) != 0 }
         end
 
         def feed(data)
@@ -132,7 +136,7 @@ module UniversalDetector
             end
 
             if @_mInputState == :PureAscii
-                if data =~ @_highBitDetector
+                if contains_high_bit?(data)
                     @_mInputState = :Highbyte
                 elsif (@_mLastChar + data) =~ @_escDetector
                     @_mInputState = :EscAscii
