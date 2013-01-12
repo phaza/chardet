@@ -81,7 +81,7 @@ module UniversalDetector
         def get_confidence
             unlike = 0.99
             if @_mNumOfMBChar < 6
-                for i in 0...@_mNumOfMBChar
+                @_mNumOfMBChar.times do
                     unlike = unlike * ONE_CHAR_PROB
                 end
                 return 1.0 - unlike
