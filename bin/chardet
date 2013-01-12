@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby -wKU
+# -*- encoding: utf-8 -*-
+
+$:.unshift File.join(File.dirname(__FILE__), *%w[.. lib])
+
+require 'optparse'
+require 'UniversalDetector'
+
+options = {}
+OptionParser.new do | opts |
+  opts.banner = <<-END_OF_HELP
+chardet is a universal character encoding detector.
+
+Usage:
+  chardet                 # load text from stdin
+  chardet -f <filename>   # load text from <filename>
+  chardet -e '<string>'   # load text from <string>
+END_OF_HELP
+  opts.separator ''
+  opts.separator 'Options:'
+
+  opts.on('-f', '--file PATH', 'File from which to load text') do | filename |
+    options['file'] = filename
+  end
+
+  opts.on('-e', '--string STRING', 'String from which to load text') do | str |
+    options['string'] = str
+  end
+
+  opts.separator ''
+  opts.separator 'Common options:'
+
+  opts.on_tail('-h', '--help', 'Show this message') do
+    puts opts
+    exit 0
+  end
+
+  opts.on_tail('-V', '--version', 'Display version information') do
+    puts 'output version here'
+    exit 0
+  end
+end.parse!
