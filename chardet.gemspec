@@ -33,5 +33,6 @@ which itself is a Ruby port of Mark Pilgrim's original Python code, which does n
   s.test_files = `git ls-files -- {test,spec,features}/*`.split("\n")
 
   # s.add_dependency+
-  # s.add_development_dependency+
+
+  s.add_development_dependency 'rspec', '2.12.0'
 end
