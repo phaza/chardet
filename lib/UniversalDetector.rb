@@ -75,7 +75,7 @@ module UniversalDetector
 
         def initialize
             # @_highBitDetector = Regexp.new('[\x80-\xFF]', nil, 'n')
-            @_escDetector = /\033|~\{/
+            # @_escDetector = /\033|~\{/
             @_mEscCharSetProber = nil
             @_mCharSetProbers = []
             reset
@@ -94,6 +94,15 @@ module UniversalDetector
             for prober in @_mCharSetProbers
                 prober.reset
             end
+        end
+
+        def contains_escape?(data)
+          return true if data.include? 0x1B
+
+          idx = data.find_index 0x7E
+          return (data[idx + 1] == 0x7B) if idx
+
+          false
         end
 
         def contains_high_bit?(data)
@@ -138,7 +147,7 @@ module UniversalDetector
             if @_mInputState == :PureAscii
                 if contains_high_bit?(data)
                     @_mInputState = :Highbyte
-                elsif (@_mLastChar + data) =~ @_escDetector
+                elsif contains_escape?(@_mLastChar + data)
                     @_mInputState = :EscAscii
                 end
             end
