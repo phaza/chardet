@@ -28,89 +28,88 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-# require 'UniversalDetector'
 require 'CharSetProber'
 
 module  UniversalDetector
-    class CharSetGroupProber < CharSetProber
-        def initialize
-            @_mActiveNum = 0
-            @_mProbers = []
-            @_mBestGuessProber = nil
-        end
-
-        def reset
-            super
-            @_mActiveNum = 0
-            for prober in @_mProbers
-                if prober
-                    prober.reset()
-                    prober.active = true
-                    @_mActiveNum += 1
-                end
-            end
-            @_mBestGuessProber = nil
-        end
-
-        def get_charset_name
-            unless @_mBestGuessProber
-                get_confidence()
-                unless @_mBestGuessProber then return nil end
-    #                @_mBestGuessProber = @_mProbers[0]
-            end
-            return @_mBestGuessProber.get_charset_name()
-        end
-
-        def feed(aBuf)
-            for prober in @_mProbers
-                unless prober then next end
-                unless prober.active then next end
-                st = prober.feed(aBuf)
-                unless st then next end
-                if st == :FoundIt
-                    @_mBestGuessProber = prober
-                    return get_state()
-                elsif st == :NotMe
-                    prober.active = false
-                    @_mActiveNum -= 1
-                    if @_mActiveNum <= 0
-                        @_mState = :NotMe
-                        return get_state()
-                    end
-                end
-            end
-            return get_state()
-        end
-
-        def get_confidence
-            st = get_state()
-            if st == :FoundIt
-                return 0.99
-            elsif st == :NotMe
-                return 0.01
-            end
-
-            bestConf = 0.0
-            @_mBestGuessProber = nil
-            for prober in @_mProbers
-                unless prober then next end
-                unless prober.active
-                    if UniversalDetector::DEBUG
-                        p(prober.get_charset_name() + ' not active\n')
-                    end
-                    next
-                end
-                cf = prober.get_confidence()
-                if UniversalDetector::DEBUG
-                    p('%s confidence = %s\n' % [prober.get_charset_name(), cf])
-                end
-                if bestConf < cf
-                    bestConf = cf
-                    @_mBestGuessProber = prober
-                end
-            end
-            unless @_mBestGuessProber then return 0.0 end
-            return bestConf
-        end
+  class CharSetGroupProber < CharSetProber
+    def initialize
+      @_mActiveNum = 0
+      @_mProbers = []
+      @_mBestGuessProber = nil
     end
+
+    def reset
+      super
+      @_mActiveNum = 0
+      for prober in @_mProbers
+        if prober
+          prober.reset()
+          prober.active = true
+          @_mActiveNum += 1
+        end
+      end
+      @_mBestGuessProber = nil
+    end
+
+    def get_charset_name
+      unless @_mBestGuessProber
+        get_confidence()
+        unless @_mBestGuessProber then return nil end
+        # @_mBestGuessProber = @_mProbers[0]
+      end
+      return @_mBestGuessProber.get_charset_name()
+    end
+
+    def feed(aBuf)
+      for prober in @_mProbers
+        unless prober then next end
+        unless prober.active then next end
+        st = prober.feed(aBuf)
+        unless st then next end
+        if st == :FoundIt
+          @_mBestGuessProber = prober
+          return get_state()
+        elsif st == :NotMe
+          prober.active = false
+          @_mActiveNum -= 1
+          if @_mActiveNum <= 0
+            @_mState = :NotMe
+            return get_state()
+          end
+        end
+      end
+      return get_state()
+    end
+
+    def get_confidence
+      st = get_state()
+      if st == :FoundIt
+        return 0.99
+      elsif st == :NotMe
+        return 0.01
+      end
+
+      bestConf = 0.0
+      @_mBestGuessProber = nil
+      for prober in @_mProbers
+        unless prober then next end
+        unless prober.active
+          if UniversalDetector::DEBUG
+            p(prober.get_charset_name() + ' not active\n')
+          end
+          next
+        end
+        cf = prober.get_confidence()
+        if UniversalDetector::DEBUG
+          p('%s confidence = %s\n' % [prober.get_charset_name(), cf])
+        end
+        if bestConf < cf
+          bestConf = cf
+          @_mBestGuessProber = prober
+        end
+      end
+      unless @_mBestGuessProber then return 0.0 end
+      return bestConf
+    end
+  end
 end

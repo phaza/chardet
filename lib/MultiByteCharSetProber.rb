@@ -28,69 +28,65 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-# require 'UniversalDetector'
 require 'CharSetProber'
 
 module  UniversalDetector
 
-    class MultiByteCharSetProber < CharSetProber
-        def initialize
-            super
-            @_mDistributionAnalyzer = nil
-            @_mCodingSM = nil
-            @_mLastChar = [ 0x00, 0x00 ]
-        end
-
-        def reset
-            super
-            if @_mCodingSM
-                @_mCodingSM.reset()
-            end
-            if @_mDistributionAnalyzer
-                @_mDistributionAnalyzer.reset()
-            end
-            @_mLastChar = [ 0x00, 0x00 ]
-        end
-
-        def get_charset_name
-        end
-
-        def feed(aBuf)
-            aLen = aBuf.length
-            for i in 0...aLen
-                codingState = @_mCodingSM.next_state(aBuf[i])
-                if codingState == :Error
-                    if UniversalDetector::DEBUG
-                        p(get_charset_name() + ' prober hit error at byte ' + i.to_s + '\n')
-                    end
-                    @_mState = :NotMe
-                    break
-                elsif codingState == :ItsMe
-                    @_mState = :FoundIt
-                    break
-                elsif codingState == :Start
-                    charLen = @_mCodingSM.get_current_charlen()
-                    if i == 0
-                        @_mLastChar[1] = aBuf[0]
-                        @_mDistributionAnalyzer.feed(@_mLastChar, charLen)
-                    else
-                        @_mDistributionAnalyzer.feed(aBuf[(i-1)..(i+1)], charLen)
-                    end
-                end
-            end
-
-            @_mLastChar[0] = aBuf[aLen - 1]
-            if get_state() == :Detecting
-                if @_mDistributionAnalyzer.got_enough_data() && (get_confidence() > SHORTCUT_THRESHOLD)
-                    @_mState = :FoundIt
-                end
-            end
-
-            return get_state()
-        end
-
-        def get_confidence
-            return @_mDistributionAnalyzer.get_confidence()
-        end
+  class MultiByteCharSetProber < CharSetProber
+    def initialize
+      super
+      @_mDistributionAnalyzer = nil
+      @_mCodingSM = nil
+      @_mLastChar = [ 0x00, 0x00 ]
     end
+
+    def reset
+      super
+      if @_mCodingSM
+        @_mCodingSM.reset()
+      end
+      if @_mDistributionAnalyzer
+        @_mDistributionAnalyzer.reset()
+      end
+      @_mLastChar = [ 0x00, 0x00 ]
+    end
+
+    def get_charset_name
+    end
+
+    def feed(aBuf)
+      aBuf.each_with_index do | b, i |
+        codingState = @_mCodingSM.next_state(b)
+        if codingState == :Error
+          UniversalDetector::log.debug '%s prober hit error at byte %s' % [ get_charset_name(), i.to_s ]
+          @_mState = :NotMe
+          break
+        elsif codingState == :ItsMe
+          @_mState = :FoundIt
+          break
+        elsif codingState == :Start
+          charLen = @_mCodingSM.get_current_charlen()
+          if i == 0
+            @_mLastChar[1] = b
+            @_mDistributionAnalyzer.feed(@_mLastChar, charLen)
+          else
+            @_mDistributionAnalyzer.feed(aBuf[(i-1)..(i+1)], charLen)
+          end
+        end
+      end
+
+      @_mLastChar[0] = aBuf[-1]
+      if get_state() == :Detecting
+        if @_mDistributionAnalyzer.got_enough_data() && (get_confidence() > SHORTCUT_THRESHOLD)
+          @_mState = :FoundIt
+        end
+      end
+
+      return get_state()
+    end
+
+    def get_confidence
+      return @_mDistributionAnalyzer.get_confidence()
+    end
+  end
 end

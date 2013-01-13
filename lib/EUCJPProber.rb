@@ -28,7 +28,6 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-# require 'UniversalDetector'
 require 'MultiByteCharSetProber'
 require 'CodingStateMachine'
 require 'CharDistributionAnalysis'
@@ -36,64 +35,65 @@ require 'MBCSSM'
 require 'JapaneseContextAnalysis'
 
 module  UniversalDetector
-    class EUCJPProber < MultiByteCharSetProber
-        def initialize
-            super
-            @_mCodingSM = CodingStateMachine.new(EUCJPSMModel)
-            @_mDistributionAnalyzer = EUCJPDistributionAnalysis.new
-            @_mContextAnalyzer = EUCJPContextAnalysis.new
-            reset()
-        end
 
-        def reset
-            super
-            @_mContextAnalyzer.reset()
-        end
-
-        def get_charset_name
-            return "EUC-JP"
-        end
-
-        def feed(aBuf)
-            aLen = aBuf.length
-            for i in 0...aLen
-                codingState = @_mCodingSM.next_state(aBuf[i])
-                if codingState == :Error
-                    if DEBUG
-                        p(get_charset_name() + ' prober hit error at byte ' + i.to_s + '\n')
-                    end
-                    @_mState = :NotMe
-                    break
-                elsif codingState == :ItsMe
-                    @_mState = :FoundIt
-                    break
-                elsif codingState == :Start
-                    charLen = @_mCodingSM.get_current_charlen()
-                    if i == 0
-                        @_mLastChar[1] = aBuf[0]
-                        @_mContextAnalyzer.feed(@_mLastChar, charLen)
-                        @_mDistributionAnalyzer.feed(@_mLastChar, charLen)
-                    else
-                        @_mContextAnalyzer.feed(aBuf[i-1..i+1], charLen)
-                        @_mDistributionAnalyzer.feed(aBuf[i-1..i+1], charLen)
-                    end
-                end
-            end
-
-            @_mLastChar[0] = aBuf[aLen - 1]
-
-            if get_state() == :Detecting
-                if @_mContextAnalyzer.got_enough_data() && (get_confidence() > SHORTCUT_THRESHOLD)
-                    @_mState = :FoundIt
-                end
-            end
-            return get_state()
-        end
-
-        def get_confidence
-            contxtCf = @_mContextAnalyzer.get_confidence()
-            distribCf = @_mDistributionAnalyzer.get_confidence()
-            return [contxtCf, distribCf].max
-        end
+  class EUCJPProber < MultiByteCharSetProber
+    def initialize
+      super
+      @_mCodingSM = CodingStateMachine.new(EUCJPSMModel)
+      @_mDistributionAnalyzer = EUCJPDistributionAnalysis.new
+      @_mContextAnalyzer = EUCJPContextAnalysis.new
+      reset()
     end
+
+    def reset
+      super
+      @_mContextAnalyzer.reset()
+    end
+
+    def get_charset_name
+      return "EUC-JP"
+    end
+
+    def feed(aBuf)
+      aBuf.each_with_index do | b, i |
+        codingState = @_mCodingSM.next_state(b)
+        if codingState == :Error
+          UniversalDetector::log.debug '%s prober hit error at byte %s' % [ get_charset_name(), i.to_s ]
+          @_mState = :NotMe
+          break
+        elsif codingState == :ItsMe
+          @_mState = :FoundIt
+          break
+        elsif codingState == :Start
+          charLen = @_mCodingSM.get_current_charlen()
+          if i == 0
+            @_mLastChar[1] = b
+            @_mContextAnalyzer.feed(@_mLastChar, charLen)
+            @_mDistributionAnalyzer.feed(@_mLastChar, charLen)
+          else
+            @_mContextAnalyzer.feed(aBuf[i-1..i+1], charLen)
+            @_mDistributionAnalyzer.feed(aBuf[i-1..i+1], charLen)
+          end
+        end
+      end
+
+      @_mLastChar[0] = aBuf[-1]
+
+      if get_state() == :Detecting
+        if @_mContextAnalyzer.got_enough_data() && (get_confidence() > SHORTCUT_THRESHOLD)
+          @_mState = :FoundIt
+        end
+      end
+
+      get_state()
+    end
+
+    def get_confidence
+      contxtCf = @_mContextAnalyzer.get_confidence()
+      UniversalDetector::log.debug('EUCJPProber - context confidence = %s' % contxtCf)
+      distribCf = @_mDistributionAnalyzer.get_confidence()
+      UniversalDetector::log.debug('EUCJPProber - distribution confidence = %s' % distribCf)
+      return [contxtCf, distribCf].max
+    end
+  end
 end

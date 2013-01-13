@@ -28,7 +28,6 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-# require 'UniversalDetector'
 require 'CharSetGroupProber'
 require 'UTF8Prober'
 require 'SJISProber'
@@ -39,21 +38,13 @@ require 'Big5Prober'
 require 'EUCTWProber'
 
 module UniversalDetector
-    class MBCSGroupProber < CharSetGroupProber
+  class MBCSGroupProber < CharSetGroupProber
+    attr_reader :mProbers
 
-        attr_reader :mProbers
-
-        def initialize
-            super
-            @mProbers = [ \
-                UTF8Prober.new,
-                SJISProber.new,
-                EUCJPProber.new,
-                GB2312Prober.new,
-                EUCKRProber.new,
-                Big5Prober.new,
-                EUCTWProber.new]
-            reset()
-        end
+    def initialize
+      super
+      @mProbers = [ UTF8Prober.new, SJISProber.new, EUCJPProber.new, GB2312Prober.new, EUCKRProber.new, Big5Prober.new, EUCTWProber.new ]
+      reset()
     end
+  end
 end

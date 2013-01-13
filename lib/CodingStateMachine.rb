@@ -28,49 +28,58 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-# require 'UniversalDetector'
+module UniversalDetector
 
-module  UniversalDetector
-    class CodingStateMachine
-        def initialize(sm)
-            @_mModel = sm
-            @_mCurrentBytePos = 0
-            @_mCurrentCharLen = 0
-            reset()
-        end
-
-        def reset
-            @_mCurrentState = :Start
-        end
-
-        def next_state(c)
-            # for each byte we get its class
-            # if it is first byte, we also get byte length
-            byteCls = @_mModel['classTable'][c]
-
-            if @_mCurrentState == :Start
-                @_mCurrentBytePos = 0
-                @_mCurrentCharLen = @_mModel['charLenTable'][byteCls]
-            end
-            # from byte's class and stateTable, we get its next state
-            stateValue = {:Start => 0, :Error  => 1, :ItsMe  => 2}
-            unless stateValue[@_mCurrentState]
-                v = @_mCurrentState
-            else
-                v = stateValue[@_mCurrentState]
-            end
-            @_mCurrentState = @_mModel['stateTable'][v * @_mModel['classFactor'] + byteCls]
-
-            @_mCurrentBytePos += 1
-            return @_mCurrentState
-        end
-
-        def get_current_charlen
-            return @_mCurrentCharLen
-        end
-
-        def get_coding_state_machine
-            return @_mModel['name']
-        end
+  class CodingStateMachine
+    def initialize(sm)
+      @_mModel = sm
+      @_mCurrentBytePos = 0
+      @_mCurrentCharLen = 0
+      reset()
     end
+
+    def reset
+      @_mCurrentState = :Start
+    end
+
+    def next_state(b)
+      UniversalDetector::log.debug("in CodingStateMachine::next_state with byte #{[b].pack('c').unpack('H*')}")
+
+      # for each byte we get its class
+      # if it is first byte, we also get byte length
+      byteCls = @_mModel['classTable'][b]
+      if @_mCurrentState == :Start
+        @_mCurrentBytePos = 0
+        @_mCurrentCharLen = @_mModel['charLenTable'][byteCls]
+      end
+
+      UniversalDetector::log.debug("current state = #{@_mCurrentState}")
+
+      # from byte's class and stateTable, we get its next state
+      stateValue = {:Start => 0, :Error  => 1, :ItsMe  => 2}
+      if stateValue[@_mCurrentState]
+        v = stateValue[@_mCurrentState]
+      else
+        v = @_mCurrentState
+      end
+
+      UniversalDetector::log.debug("v = #{v}")
+
+      @_mCurrentState = @_mModel['stateTable'][v * @_mModel['classFactor'] + byteCls]
+
+      UniversalDetector::log.debug("new state = #{@_mCurrentState}")
+
+      @_mCurrentBytePos += 1
+      return @_mCurrentState
+    end
+
+    def get_current_charlen
+      return @_mCurrentCharLen
+    end
+
+    def get_coding_state_machine
+      return @_mModel['name']
+    end
+  end
+
 end

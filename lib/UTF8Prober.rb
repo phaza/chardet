@@ -28,66 +28,64 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-# require 'UniversalDetector'
 require 'CharSetProber'
 require 'CodingStateMachine'
 require 'MBCSSM'
 
 module UniversalDetector
-    ONE_CHAR_PROB = 0.5
+  ONE_CHAR_PROB = 0.5
 
-    class UTF8Prober < CharSetProber
-        def initialize
-            super()
-            @_mCodingSM = CodingStateMachine.new(UTF8SMModel)
-            reset()
-        end
-
-        def reset
-            super
-            @_mCodingSM.reset()
-            @_mNumOfMBChar = 0
-        end
-
-        def get_charset_name
-            return "utf-8"
-        end
-
-        def feed(aBuf)
-            aLen = aBuf.length
-            for i in 0...aLen
-                codingState = @_mCodingSM.next_state(aBuf[i])
-                if codingState == :Error
-                    @_mState = :NotMe
-                    break
-                elsif codingState == :ItsMe
-                    @_mState = :FoundIt
-                    break
-                elsif codingState == :Start
-                    if @_mCodingSM.get_current_charlen() >= 2
-                        @_mNumOfMBChar += 1
-                    end
-                end
-            end
-
-            if get_state() == :Detecting
-                if get_confidence() > SHORTCUT_THRESHOLD
-                    @_mState = :FoundIt
-                end
-            end
-            return get_state()
-        end
-
-        def get_confidence
-            unlike = 0.99
-            if @_mNumOfMBChar < 6
-                @_mNumOfMBChar.times do
-                    unlike = unlike * ONE_CHAR_PROB
-                end
-                return 1.0 - unlike
-            else
-                return unlike
-            end
-        end
+  class UTF8Prober < CharSetProber
+    def initialize
+      super()
+      @_mCodingSM = CodingStateMachine.new(UTF8SMModel)
+      reset()
     end
+
+    def reset
+      super
+      @_mCodingSM.reset()
+      @_mNumOfMBChar = 0
+    end
+
+    def get_charset_name
+      return "utf-8"
+    end
+
+    def feed(aBuf)
+      aBuf.each do | b |
+        codingState = @_mCodingSM.next_state(b)
+        if codingState == :Error
+          @_mState = :NotMe
+          break
+        elsif codingState == :ItsMe
+          @_mState = :FoundIt
+          break
+        elsif codingState == :Start
+          if @_mCodingSM.get_current_charlen() >= 2
+            @_mNumOfMBChar += 1
+          end
+        end
+      end
+
+      if get_state() == :Detecting
+        if get_confidence() > SHORTCUT_THRESHOLD
+          @_mState = :FoundIt
+        end
+      end
+      return get_state()
+    end
+
+    def get_confidence
+      unlike = 0.99
+      if @_mNumOfMBChar < 6
+        @_mNumOfMBChar.times do
+          unlike = unlike * ONE_CHAR_PROB
+        end
+        return 1.0 - unlike
+      else
+        return unlike
+      end
+    end
+  end
 end
