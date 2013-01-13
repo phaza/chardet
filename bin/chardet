@@ -40,3 +40,15 @@ END_OF_HELP
     exit 0
   end
 end.parse!
+
+text_to_detect = case
+when options['file']
+  File.read(options['file'])
+when options['string']
+  options['string']
+else
+  STDIN.read
+end
+
+detected = UniversalDetector::chardet(text_to_detect.bytes.to_a)
+puts "encoding: #{detected['encoding']}, confidence: #{detected['confidence']}"
