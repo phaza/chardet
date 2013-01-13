@@ -28,197 +28,191 @@
 # 02110-1301  USA
 ######################### END LICENSE BLOCK #########################
 
-require "EscCharSetProber"
-require "MBCSGroupProber"
-require "SBCSGroupProber"
-require "Latin1Prober"
-require "singleton"
+require 'logger'
+require 'singleton'
+
+require 'EscCharSetProber'
+require 'MBCSGroupProber'
+require 'SBCSGroupProber'
+require 'Latin1Prober'
 
 module UniversalDetector
 
-    class << self
-        def encoding(data)
-            chardet(data)['encoding']
-        end
-
-        def chardet(data)
-            u = UniversalDetector::Detector.instance
-            u.reset()
-            u.feed(data)
-            u.close()
-            u.result
-        end
+  class << self
+    def encoding(data)
+      chardet(data)['encoding']
     end
 
-    DEBUG = nil
+    def chardet(data)
+      u = UniversalDetector::Detector.instance
+      u.reset()
+      u.feed(data)
+      u.close()
+      u.result
+    end
 
-    Detectiong = 0
-    FoundIt = 1
-    NotMe = 2
+    def log
+      @log ||= Logger.new(STDOUT)
+    end
+  end
 
-    Start = 0
-    Error = 1
-    ItsMe = 2
+  log.level = Logger::INFO
 
-    MINIMUM_THRESHOLD = 0.20
-    PureAscii = 0
-    EscAscii = 1
-    Highbyte = 2
+  Detectiong = 0
+  FoundIt = 1
+  NotMe = 2
 
-    SHORTCUT_THRESHOLD = 0.95
+  Start = 0
+  Error = 1
+  ItsMe = 2
 
-    class Detector
+  MINIMUM_THRESHOLD = 0.20
+  PureAscii = 0
+  EscAscii = 1
+  Highbyte = 2
 
-        include Singleton
+  SHORTCUT_THRESHOLD = 0.95
 
-        attr_reader :result
+  class Detector
 
-        def initialize
-            # @_highBitDetector = Regexp.new('[\x80-\xFF]', nil, 'n')
-            # @_escDetector = /\033|~\{/
-            @_mEscCharSetProber = nil
-            @_mCharSetProbers = []
-            reset
+    include Singleton
+
+    attr_reader :result
+
+    def initialize
+      @_mEscCharSetProber = nil
+      @_mCharSetProbers = []
+      reset
+    end
+
+    def reset
+      @result = {"encoding"=> nil, "confidence"=> 0.0}
+      @done = false
+      @_mStart = true
+      @_mGotData = false
+      @_mInputState = :PureAscii
+      @_mLastChar = []
+      @_mEscCharSetProber.reset if @_mEscCharSetProber
+      @_mCharSetProbers.each { | prober | prober.reset }
+    end
+
+    def contains_escape?(data)
+      return true if data.include? 0x1B
+
+      idx = data.find_index 0x7E
+      return (data[idx + 1] == 0x7B) if idx
+
+      false
+    end
+
+    def contains_high_bit?(data)
+      data.any? { | b | (b & 0x80) != 0 }
+    end
+
+    def feed(data)
+      return if (@done || data.empty?)
+
+      unless @_mGotData
+        if data[0..2] == [ 0xEF, 0xBB, 0xBF ]             # UTF-8 with BOM
+          UniversalDetector::log.debug 'found UTF-8 BOM'
+          @result = { "encoding" => "UTF-8", "confidence" => 1.0 }
+        elsif data[0..3] == [ 0xFF, 0xFE ]                # UTF-16 with little-endian BOM
+          UniversalDetector::log.debug 'found UTF-16LE BOM'
+          @result = { "encoding" => "UTF-16LE", "confidence" => 1.0 }
+        elsif data[0..1] == [ 0xFE, 0xFF ]                # UTF-16 with big-endian BOM
+          UniversalDetector::log.debug 'found UTF-16BE BOM'
+          @result = { "encoding" => "UTF-16BE", "confidence" => 1.0 }
+        elsif data[0..3] == [ 0xFF, 0xFE, 0x00, 0x00 ]    # UTF-32 with little-endian BOM
+          UniversalDetector::log.debug 'found UTF-32LE BOM'
+          @result = { "encoding" => "UTF-32LE", "confidence" => 1.0 }
+        elsif data[0..3] == [ 0x00, 0x00, 0xFE, 0xFF ]    # UTF-32 with big-endian BOM
+          UniversalDetector::log.debug 'found UTF-32BE BOM'
+          @result = { "encoding" => "UTF-32BE", "confidence" => 1.0 }
+        elsif data[0..3] == [ 0xFE, 0xFF, 0x00, 0x00 ]    # UCS-4 with unusual octet order BOM (3412)
+          UniversalDetector::log.debug 'found UCS-4-3412 BOM'
+          @result = { "encoding" => "X-ISO-10646-UCS-4-3412", "confidence" => 1.0 }
+        elsif data[0..3] == [ 0x00, 0x00, 0xFF, 0xFE ]    # UCS-4 with unusual octet order BOM (2143)
+          UniversalDetector::log.debug 'found UCS-4-2143 BOM'
+          @result = { "encoding" => "X-ISO-10646-UCS-4-2143", "confidence" => 1.0 }
         end
+      end
 
-        def reset
-            @result = {"encoding"=> nil, "confidence"=> 0.0}
-            @done = false
-            @_mStart = true
-            @_mGotData = false
-            @_mInputState = :PureAscii
-            @_mLastChar = []
-            if @_mEscCharSetProber
-                @_mEscCharSetProber.reset
-            end
-            for prober in @_mCharSetProbers
-                prober.reset
-            end
+      @_mGotData = true
+      if @result["encoding"] && @result["confidence"] > 0.0
+        @done = true
+        return
+      end
+
+      if @_mInputState == :PureAscii
+        if contains_high_bit?(data)
+          UniversalDetector::log.debug 'found high bit'
+          @_mInputState = :Highbyte
+        elsif contains_escape?(@_mLastChar + data)
+          UniversalDetector::log.debug 'found escape or escape sequence'
+          @_mInputState = :EscAscii
         end
+      end
 
-        def contains_escape?(data)
-          return true if data.include? 0x1B
+      @_mLastChar = data[-1]
 
-          idx = data.find_index 0x7E
-          return (data[idx + 1] == 0x7B) if idx
-
-          false
+      if @_mInputState == :EscAscii
+        unless @_mEscCharSetProber
+          @_mEscCharSetProber = EscCharSetProber.new
         end
-
-        def contains_high_bit?(data)
-          data.any? { | b | (b & 0x80) != 0 }
+        UniversalDetector::log.debug 'trying EscCharSetProber'
+        if @_mEscCharSetProber.feed(data) == constants.eFoundIt
+          @result = {"encoding"=> @_mEscCharSetProber.get_charset_name() ,"confidence"=> @_mEscCharSetProber.get_confidence()}
+          @done = true
         end
-
-        def feed(data)
-            if @done || data.empty?
-                return
-            end
-            unless  @_mGotData
-                # If the data starts with BOM, we know it is UTF
-                if data[0,3] == "\xEF\xBB\xBF"
-                    # EF BB BF  UTF-8 with BOM
-                    @result = {"encoding"=> "UTF-8", "confidence"=> 1.0}
-                elsif data[0,4] == "\xFF\xFE\x00\x00"
-                    # FF FE 00 00  UTF-32, little-endian BOM
-                    @result = {"encoding"=> "UTF-32LE", "confidence"=> 1.0}
-                elsif data[0,4] == "\x00\x00\xFE\xFF"
-                    # 00 00 FE FF  UTF-32, big-endian BOM
-                    @result = {"encoding"=> "UTF-32BE", "confidence"=> 1.0}
-                elsif data[0,4] == "\xFE\xFF\x00\x00"
-                    # FE FF 00 00  UCS-4, unusual octet order BOM (3412)
-                    @result = {"encoding"=> "X-ISO-10646-UCS-4-3412", "confidence"=> 1.0}
-                elsif data[0,4] == "\x00\x00\xFF\xFE"
-                    # 00 00 FF FE  UCS-4, unusual octet order BOM (2143)
-                    @result = {"encoding"=> "X-ISO-10646-UCS-4-2143", "confidence"=> 1.0}
-                elsif data[0,4] == "\xFF\xFE"
-                    # FF FE  UTF-16, little endian BOM
-                    @result = {"encoding"=> "UTF-16LE", "confidence"=> 1.0}
-                elsif data[0,2] == "\xFE\xFF"
-                    # FE FF  UTF-16, big endian BOM
-                    @result = {"encoding"=> "UTF-16BE", "confidence"=> 1.0}
-                end
-            end
-            @_mGotData = true
-            if @result["encoding"] && @result["confidence"] > 0.0
-                @done = true
-                return
-            end
-
-            if @_mInputState == :PureAscii
-                if contains_high_bit?(data)
-                    @_mInputState = :Highbyte
-                elsif contains_escape?(@_mLastChar + data)
-                    @_mInputState = :EscAscii
-                end
-            end
-
-            @_mLastChar = data[-1]
-            if @_mInputState == :EscAscii
-                unless @_mEscCharSetProber
-                    @_mEscCharSetProber = EscCharSetProber.new
-                end
-                if @_mEscCharSetProber.feed(data) == constants.eFoundIt
-                    @result = {"encoding"=> @_mEscCharSetProber.get_charset_name() ,"confidence"=> @_mEscCharSetProber.get_confidence()}
-                    @done = true
-                end
-            elsif @_mInputState == :Highbyte
-                if @_mCharSetProbers.empty?
-                    @_mCharSetProbers = MBCSGroupProber.new.mProbers + SBCSGroupProber.new.mProbers + [Latin1Prober.new]
-                end
-                @_mCharSetProbers.each do |prober|
-                    if prober.feed(data) == :FoundIt
-                        @result = {"encoding"=> prober.get_charset_name(), "confidence"=> prober.get_confidence()}
-                        @done = true
-                        break
-                    end
-                end #for
-            end
-        end #feed
-
-        def close
-            if @done then return end
-            unless @_mGotData
-                if DEBUG
-                    p("no data received!\n")
-                end
-                return
-            end
+      elsif @_mInputState == :Highbyte
+        if @_mCharSetProbers.empty?
+          @_mCharSetProbers = MBCSGroupProber.new.mProbers + SBCSGroupProber.new.mProbers + [Latin1Prober.new]
+        end
+        @_mCharSetProbers.each do | prober |
+          UniversalDetector::log.debug "trying #{prober.class}"
+          if prober.feed(data) == :FoundIt
+            @result = {"encoding"=> prober.get_charset_name(), "confidence"=> prober.get_confidence()}
             @done = true
+            break
+          end
+        end
+      end
+    end
 
-            if @_mInputState == :PureAscii
-                @result = {"encoding" =>  "ascii", "confidence" => 1.0}
-                return @result
-            end
+    def close
+      if @done then return end
+      unless @_mGotData
+        UniversalDetector::log.debug 'no data received'
+        return
+      end
+      @done = true
 
-            if @_mInputState == :Highbyte
-                proberConfidence = nil
-                maxProberConfidence = 0.0
-                maxProber = nil
-                for prober in @_mCharSetProbers
-                    unless prober then next end
-                    proberConfidence = prober.get_confidence()
-                    if proberConfidence > maxProberConfidence
-                        maxProberConfidence = proberConfidence
-                        maxProber = prober
-                    end
-                end
-                if maxProber and (maxProberConfidence > MINIMUM_THRESHOLD)
-                    @result = {"encoding" => maxProber.get_charset_name(),
-                                   "confidence" => maxProber.get_confidence()}
-                    return @result
-                end
-            end #if
+      if @_mInputState == :PureAscii
+        @result = {"encoding" =>  "ascii", "confidence" => 1.0}
+        return @result
+      end
 
-            if DEBUG
-                p("no probers hit minimum threshhold\n")
-                for prober in @_mCharSetProbers
-                    unless prober then next end
-                    p("%s confidence = %s\n" % \
-                                     [prober.get_charset_name(), \
-                                      prober.get_confidence()])
-                end
-            end
-        end #close
-    end #class
+      if @_mInputState == :Highbyte
+        proberConfidence = nil
+        maxProberConfidence = 0.0
+        maxProber = nil
 
-end #module
+        @_mCharSetProbers.each do | prober |
+          proberConfidence = prober.get_confidence()
+          UniversalDetector::log.debug "#{prober.class}: #{proberConfidence}"
+          if proberConfidence > maxProberConfidence
+            maxProberConfidence = proberConfidence
+            maxProber = prober
+          end
+        end
+        if maxProber and (maxProberConfidence > MINIMUM_THRESHOLD)
+          @result = { "encoding" => maxProber.get_charset_name(), "confidence" => maxProber.get_confidence() }
+          return @result
+        end
+      end
+
+      UniversalDetector::log.debug 'no probers hit minimum threshhold'
+    end
+  end
+
+end
